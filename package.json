@@ -1,0 +1,16 @@
+{
+  "name": "automation",
+  "version": "1.0.0",
+  "description": "Test Scenarios for Sign-Up Page 1. Functional Test Scenarios Test Scenario 1: Successful Sign-Up Description: Verify that a user can successfully sign up with valid information. Steps: Navigate to the sign-up page. (Should check URL?) Fill in all required fields with valid data. (Name amd email) (check if they are visible) Click the \"Sign Up\" button. Redirect to a sign-up page (Verify URL) Fill all fields (need all fields?) (check if they are visible) Click Create Account Expected Result: User is redirected to a confirmation page. Click \"Continue\" button Verify User Name on the header. Test Scenario 2: Email Already Registered Description: Verify that the system prevents sign-up with an already registered email. Steps: Navigate to the sign-up page. Enter an email that is already registered. Fill in the other required fields with valid data. Click the \"Sign Up\" button. Expected Result: Error message is displayed indicating that the email is already exist. Test Scenario 3: Empty Required Fields Submission Description: Verify that the system prompts the user when trying to sign up with empty required fields. Steps: Navigate to the sign-up page. Leave required fields empty. Click the \"Sign Up\" button. Expected Result: Error messages are displayed for each empty required field. (Should do for each field?)",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@faker-js/faker": "^8.4.1",
+    "cypress": "^13.14.0"
+  }
+}
