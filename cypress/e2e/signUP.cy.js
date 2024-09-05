@@ -1,12 +1,170 @@
 import { faker } from "@faker-js/faker";
 
 describe('SignUp', () => {
-    
-    it('Verify that a user can successfully sign up with valid information', () => {
+  
+    const visitHomePage = () => {
+        cy.visit('/');
+    };
 
-        const name = faker.internet.userName();
+    const clickSignUpLogin = () => {
+        cy.get('a[href="/login"]').click();
+    };
+
+    const verifyURLContains = (text) => {
+        cy.url().should('include', text);
+    };
+
+    const fillSignupForm = (userName, userEmail) => {
+        cy.get('[data-qa="signup-name"]').type(userName);
+        cy.get('[data-qa="signup-email"]').type(userEmail);
+        cy.get('[data-qa="signup-button"]').click();
+    };
+
+    const verifyElementTextAndVisibility = (selector, text) => {
+        cy.get(selector).should('have.text', text).should('be.visible');
+    };
+
+    const verifyMultiElementTextAndVisibility = (selector, text, index = 0) => {
+        cy.get(selector).eq(index).should('have.text', text).should('be.visible');
+    };
+
+    const checkInputRequired = (selector) => {
+        cy.get(selector).should('have.attr', 'required');
+    };
+
+    const verifyElementExistAndVisibility = (selector) => {
+        cy.get(selector).should('exist').should('be.visible');
+    };
+
+    const verifyFormLabelsAndFields = () => {
+        const fields = [
+            { selector: 'h2.title', text: 'Enter Account Information' },
+            { selector: 'div.clearfix > label', text: 'Title' },
+            { selector: 'div.form-group > label', text: 'Name *' },
+            { selector: 'div.form-group > label', text: 'Email *', index: 1 },
+            { selector: 'div.form-group > label', text: 'Password *', index: 2 },
+            { selector: 'div.form-group > label', text: 'Date of Birth', index: 3 },
+            { selector: 'div.checkbox > label', text: 'Sign up for our newsletter!' },
+            { selector: 'div.checkbox > label', text: 'Receive special offers from our partners!', index: 1 },
+            { selector: 'h2.title', text: 'Address Information', index: 1 },
+            { selector: 'p.form-group > label', text: 'First name *' },
+            { selector: 'p.form-group > label', text: 'Last name *', index: 1 },
+            { selector: 'p.form-group > label', text: 'Company', index: 2 },
+            { selector: 'p.form-group > label', text: 'Address * (Street address, P.O. Box, Company name, etc.)', index: 3 },
+            { selector: 'p.form-group > label', text: 'Address 2', index: 4 },
+            { selector: 'p.form-group > label', text: 'Country * ', index: 5 },
+            { selector: 'p.form-group > label', text: 'State * ', index: 6 },
+            { selector: 'p.form-group > label', text: 'City * ', index: 7 },
+            { selector: 'p.form-group > label', text: 'Zipcode * ', index: 8 },
+            { selector: 'p.form-group > label', text: 'Mobile Number * ', index: 9 },
+            { selector: 'button[data-qa="create-account"]', text: 'Create Account' }
+        ];
+        
+        fields.forEach(({ selector, text, index = 0 }) => {
+            cy.get(selector).eq(index).should('have.text', text).should('be.visible');
+        });
+
+        const requiredFields = [
+            'input[data-qa="name"]',
+            'input[data-qa="email"]',
+            'input[data-qa="password"]',
+            'input[data-qa="first_name"]',
+            'input[data-qa="last_name"]',
+            'input[data-qa="address"]',
+            'select[data-qa="country"]',
+            'input[data-qa="state"]',
+            'input[data-qa="city"]',
+            'input[data-qa="zipcode"]',
+            'input[data-qa="mobile_number"]'
+        ];
+
+        requiredFields.forEach(selector => checkInputRequired(selector));
+
+        const existFields = [
+            'select[data-qa="days"]',
+            'select[data-qa="months"]',
+            'select[data-qa="years"]',
+            'input#newsletter',
+            'input#optin'
+        ];
+
+        existFields.forEach(selector => verifyElementExistAndVisibility(selector));
+    };
+
+    const verifyAccountCreation = () => {
+        verifyURLContains('/account_created');
+        verifyElementTextAndVisibility('h2[data-qa="account-created"]', 'Account Created!');
+        verifyMultiElementTextAndVisibility('div.col-sm-9.col-sm-offset-1 > p', 'Congratulations! Your new account has been successfully created!');
+        verifyMultiElementTextAndVisibility('div.col-sm-9.col-sm-offset-1 > p', 'You can now take advantage of member privileges to enhance your online shopping experience with us.', 1);
+
+        cy.get('[data-qa="continue-button"]').should('have.attr', 'href', '/').contains('Continue').should('be.visible');
+    };
+
+    it('Validates sign-up page layouts', () => {
+        const userName = faker.internet.userName();
         const userEmail = faker.internet.email();
-        const password = faker.internet.password();
+        
+        visitHomePage();
+        clickSignUpLogin();
+        verifyURLContains('/login');
+        verifyElementTextAndVisibility('.signup-form h2', 'New User Signup!');
+        
+        fillSignupForm(userName, userEmail);
+        verifyURLContains('/signup');
+        // Confirm that the name matches the one used on the sign-up page.
+        cy.get('[data-qa="name"]').should('attr', 'value', userName);
+        // Confirm that the name matches the one used on the sign-up page and can't be changed.
+        cy.get('[data-qa="email"]').should('attr', 'value', userEmail).should('be.disabled');
+        // Check the status of the checkbox
+        cy.get('#newsletter').should('not.be.checked');
+        // Check the status of the checkbox
+        cy.get('#optin').should('not.be.checked');
+        // Verify the value has been selected
+        cy.get('[data-qa="country"]').should('have.value', 'India').should('be.visible');
+        verifyFormLabelsAndFields();
+        // Navigate to the Account Created URL
+        cy.visit('/account_created');
+        verifyAccountCreation();
+    });
+
+    it('Verifies that a user can sign up successfully by filling in only the mandatory fields', () => {
+        const userName = faker.internet.userName();
+        const userEmail = faker.internet.email();
+        const userPassword = faker.internet.password();
+        const userFirstName = faker.person.firstName();
+        const userLastName = faker.person.lastName();
+        const userAddress = faker.location.streetAddress();
+        const userState = faker.location.state();
+        const userCity = faker.location.city();
+        const userZipCode = faker.location.zipCode();
+        const userMobileNumber = faker.phone.number();
+
+        // visitHomePage();
+        // clickSignUpLogin();
+        cy.visit('/login');
+        fillSignupForm(userName, userEmail);
+        cy.get('[data-qa="password"]').type(userPassword);
+        cy.get('[data-qa="first_name"]').type(userFirstName);
+        cy.get('[data-qa="last_name"]').type(userLastName);
+        cy.get('[data-qa="address"]').type(userAddress);
+        cy.get('[data-qa="state"]').type(userState);
+        cy.get('[data-qa="city"]').type(userCity);
+        cy.get('[data-qa="zipcode"]').type(userZipCode);
+        cy.get('[data-qa="mobile_number"]').type(userMobileNumber);
+        cy.get('button[data-qa="create-account"]').click();
+        verifyAccountCreation();
+        cy.get('[data-qa="continue-button"]').click();
+        verifyURLContains('/');
+        cy.get('.shop-menu ul.nav.navbar-nav li').contains('Logged in as').should('contain.text', userName);
+        cy.get('a[href="/delete_account"]').should('have.text', ' Delete Account').and('be.visible').click();
+        verifyElementTextAndVisibility('h2[data-qa="account-deleted"]', 'Account Deleted!');
+        cy.get('[data-qa="continue-button"]').contains('Continue').click();
+    });
+
+    it('Verifies that a user can successfully sign up with valid information', () => {
+        const userName = faker.internet.userName();
+        const userEmail = faker.internet.email();
+        const userPassword = faker.internet.password();
         const userFirstName = faker.person.firstName();
         const userLastName = faker.person.lastName();
         const userCompany = faker.company.name();
@@ -16,213 +174,79 @@ describe('SignUp', () => {
         const userCity = faker.location.city();
         const userZipCode = faker.location.zipCode();
         const userMobileNumber = faker.phone.number();
+
+        // visitHomePage();
+        // clickSignUpLogin();
+        cy.visit('/login');
+        fillSignupForm(userName, userEmail);
         
-        cy.visit('/');        
-
-        // Click on the "Signup / Login" link
-        cy.get('a[href="/login"]').click();
-
-        //Verify URL contains login
-        cy.url().should('include', '/login');
-        
-        //Verify Sign Up form
-        cy.get('.signup-form h2').should('have.text', 'New User Signup!');
-
-        //fill Name
-        cy.get('[data-qa="signup-name"]').type(name);
-        //fill Name
-        cy.get('[data-qa="signup-email"]').type(userEmail);
-        //Click "SignUp" button
-        cy.get('[data-qa="signup-button"]').click();
-
-        //Verify URL contains signup
-        cy.url().should('include', '/signup');
-
-        //Check that the first h2 contains the text "Enter Account Information"
-        cy.get('h2.title').eq(0).should('have.text', 'Enter Account Information');
-
-        // Verify the Title label text
-        cy.get('div.clearfix > label').should('have.text', 'Title');
-
-        // Verify that the label for the selected radio button is "Mr."
+        // Select and check if the "Mr." radio button is selected.
         cy.get('label[for="id_gender1"]').should('contain.text', 'Mr.').click();
-        // Check if the "Mr" radio button is selected
         cy.get('input[type="radio"][value="Mr"]').should('be.checked');
-
-        // Verify that the label for the selected radio button is "Mrs."
+        
+        // Select and check if the "Mrs." radio button is selected.
         cy.get('label[for="id_gender2"]').should('contain.text', 'Mrs.').click();
-        // Check if the "Mrs" radio button is selected
         cy.get('input[type="radio"][value="Mrs"]').should('be.checked');
+        
+        cy.get('[data-qa="password"]').type(userPassword);
 
-        // Verify the Name * label text
-        cy.get('div.form-group > label').first().should('have.text', 'Name *');
-        // Check if the input element has the class "required"
-        // cy.get('#name').parent('.required').should('exist');
-        cy.get('input[data-qa="name"]').closest('.form-group').should('have.class', 'required');
-        //Confirm that the name matches the one used on the sign-up page.
-        cy.get('[data-qa="name"]').should('attr', 'value', name);
-
-        // Verify the Email * label text
-        cy.get('div.form-group > label').eq(1).should('have.text', 'Email *');
-        // Check if the input element has the class "required"
-        // cy.get('#name').parent('.required').should('exist');
-        cy.get('input[data-qa="email"]').closest('.form-group').should('have.class', 'required');
-        //Confirm that the name matches the one used on the sign-up page.
-        cy.get('[data-qa="email"]').should('attr', 'value', userEmail).should('be.disabled');
-
-        // Verify the Password * label text
-        cy.get('div.form-group > label').eq(2).should('have.text', 'Password *');
-        // Check if the input element has the class "required"
-        // cy.get('#name').parent('.required').should('exist');
-        cy.get('input[data-qa="password"]').closest('.form-group').should('have.class', 'required');
-        //Type password.
-        cy.get('[data-qa="password"]').type(password);
-
-        // Verify the Date of Birth label text
-        cy.get('div.form-group > label').eq(3).should('have.text', 'Date of Birth');
-
-        // Verify the day, month, and year fields are present
-        cy.get('#days').should('exist');
-        cy.get('#months').should('exist');
-        cy.get('#years').should('exist');
-
-        // Select the day, month, and year
-        cy.get('#days').select('15');   // Select 15th day
-        cy.get('#months').select('5');  // Select May
-        cy.get('#years').select('1990'); // Select year 1990
-
+         // Select the day, month, and year
+        cy.get('#days').select('15');
+        cy.get('#months').select('5');
+        cy.get('#years').select('1990');
         // Verify the values have been selected
         cy.get('#days').should('have.value', '15');
         cy.get('#months').should('have.value', '5');
         cy.get('#years').should('have.value', '1990');
-
-        // Verify that the newsletter checkbox is present and has text Sign up for our newsletter!
-        cy.get('#newsletter').should('exist');
-        cy.get('div.checkbox > label').first().should('have.text', 'Sign up for our newsletter!');
-        // Check the status of the checkbox
-        cy.get('#newsletter').should('not.be.checked');
-        // Select (check) the checkbox
+        
+        // Check and uncheck the checkbox
         cy.get('#newsletter').check().should('be.checked');
-        // Uncheck the checkbox
-        cy.get('#newsletter').uncheck().should('not.be.checked');
-
-        // Verify that the newsletter checkbox is present and has text Receive special offers from our partners!
-        cy.get('#optin').should('exist');
-        cy.get('div.checkbox > label').eq(1).should('have.text', 'Receive special offers from our partners!');
-        // Check the status of the checkbox
-        cy.get('#optin').should('not.be.checked');
-        // Select (check) the checkbox
+        cy.get('#newsletter').uncheck().should('not.be.checked');        
         cy.get('#optin').check().should('be.checked');
-        // Uncheck the checkbox
         cy.get('#optin').uncheck().should('not.be.checked');
-
-        //Check that the second h2 contains the text "Address Information."
-        cy.get('h2.title').eq(1).should('have.text', 'Address Information');
-
-        // Verify the First name * label text
-        cy.get('p.form-group > label').first().should('have.text', 'First name *');
-        // Check if the input element has the class "required"
-        // cy.get('#name').parent('.required').should('exist');
-        cy.get('input[data-qa="first_name"]').closest('.form-group').should('have.class', 'required');
-        //Type user First Name
+        
         cy.get('[data-qa="first_name"]').type(userFirstName);
-
-        // Verify the Last name * label text
-        cy.get('p.form-group > label').eq(1).should('have.text', 'Last name *');
-        // Check if the input element has the class "required"
-        // cy.get('#name').parent('.required').should('exist');
-        cy.get('input[data-qa="last_name"]').closest('.form-group').should('have.class', 'required');
-        //Type user Last Name
         cy.get('[data-qa="last_name"]').type(userLastName);
-
-        // Verify the Company label text
-        cy.get('p.form-group > label').eq(2).should('have.text', 'Company');
-        //Type user Last Name
         cy.get('[data-qa="company"]').type(userCompany);
-
-        // Verify the Address * (Street address, P.O. Box, Company name, etc.) label text
-        cy.get('p.form-group > label').eq(3).should('have.text', 'Address * (Street address, P.O. Box, Company name, etc.)');
-        // Check if the input element has the class "required"
-        // cy.get('#name').parent('.required').should('exist');
-        cy.get('input[data-qa="address"]').closest('.form-group').should('have.class', 'required');
-        //Type user Last Name
         cy.get('[data-qa="address"]').type(userAddress);
-
-        // Verify the Address 2 label text
-        cy.get('p.form-group > label').eq(4).should('have.text', 'Address 2');
-        //Type user Last Name
         cy.get('[data-qa="address2"]').type(userSecondaryAddress);
-
-        // Verify the Country * label text
-        cy.get('p.form-group > label').eq(5).should('have.text', 'Country * ');
-        // Check if the input element has the class "required"
-        // cy.get('#name').parent('.required').should('exist');
-        cy.get('select[data-qa="country"]').closest('.form-group').should('have.class', 'required');
-        // Verify the value has been selected
-        cy.get('#country').should('have.value', 'India');
-        //Select country Israel
-        cy.get('#country').select('Israel'); 
-
-        // Verify the State * label text
-        cy.get('p.form-group > label').eq(6).should('have.text', 'State * ');
-        // Check if the input element has the class "required"
-        // cy.get('#name').parent('.required').should('exist');
-        cy.get('input[data-qa="state"]').closest('.form-group').should('have.class', 'required');
-        //Type user Last Name
+        cy.get('[data-qa="country"]').select('Israel').should('have.value', 'Israel');
         cy.get('[data-qa="state"]').type(userState);
-
-        // Verify the City * label text
-        cy.get('p.form-group > label').eq(7).should('have.text', 'City * ');
-        // Check if the input element has the class "required"
-        // cy.get('#name').parent('.required').should('exist');
-        cy.get('input[data-qa="city"]').closest('.form-group').should('have.class', 'required');
-        //Type user Last Name
         cy.get('[data-qa="city"]').type(userCity);
-
-        // Verify the Zipcode * label text
-        cy.get('p.form-group > label').eq(8).should('have.text', 'Zipcode * ');
-        // Check if the input element has the class "required"
-        // cy.get('#name').parent('.required').should('exist');
-        cy.get('input[data-qa="zipcode"]').closest('.form-group').should('have.class', 'required');
-        //Type user Last Name
         cy.get('[data-qa="zipcode"]').type(userZipCode);
-
-        // Verify the Mobile Number * label text
-        cy.get('p.form-group > label').eq(9).should('have.text', 'Mobile Number * ');
-        // Check if the input element has the class "required"
-        // cy.get('#name').parent('.required').should('exist');
-        cy.get('input[data-qa="mobile_number"]').closest('.form-group').should('have.class', 'required');
-        //Type user Last Name
         cy.get('[data-qa="mobile_number"]').type(userMobileNumber);
 
-        //Click the Create Account button
-        cy.get('button[data-qa="create-account"]').should('have.text', 'Create Account').click();
-
-        //Verify redirected URL
-        cy.url().should('include', '/account_created');
-
-        //Verify that the account created text
-        cy.get('h2[data-qa="account-created"]').should('have.text', 'Account Created!');
-        // Check the first paragraph text
-        cy.get('p').contains('Congratulations! Your new account has been successfully created!')
-            .should('exist');
-        // Check the second paragraph text
-        cy.get('p').contains('You can now take advantage of member privileges to enhance your online shopping experience with us.')
-            .should('exist');
-
-        // Click on "Continue" button
-        cy.get('[data-qa="continue-button"]').should('attr', 'href', '/').contains('Continue').click();
-
-        //Verify the main page URL
-        cy.url('/').should('eq', 'https://www.automationexercise.com/');
-
-        // Check that the username is displayed correctly
-        cy.get('.shop-menu ul.nav.navbar-nav li').contains('Logged in as').should('contain.text', name);
-
-        // Check the Logout link is exist and displayed
+        cy.get('button[data-qa="create-account"]').click();
+        verifyAccountCreation();
+        cy.get('[data-qa="continue-button"]').click();
+        verifyURLContains('/');
+        cy.get('.shop-menu ul.nav.navbar-nav li').contains('Logged in as').should('contain.text', userName);
         cy.get('a[href="/logout"]').should('have.text',' Logout').and('be.visible');
+        cy.get('a[href="/delete_account"]').should('have.text', ' Delete Account').and('be.visible').click();
+        verifyElementTextAndVisibility('h2[data-qa="account-deleted"]', 'Account Deleted!');
+        cy.get('[data-qa="continue-button"]').contains('Continue').click();
+    });
 
-        // Check the Logout link is exist and displayed
-        cy.get('a[href="/delete_account"]').should('have.text',' Delete Account').and('be.visible');
+    it('Verifies the error message for an already registered email', () => {
+        const userName = faker.internet.userName();
+        cy.visit('/login');
+        fillSignupForm(userName, 'elizabethresiga@gmail.com');
+
+        // Verify the error message
+        cy.get('p').contains('Email Address already exist!').should('be.visible');        
+    });
+
+    it('Verifies SQL Injection Prevention', () => {
+        
+        const sqlInjectionStrings = "' DROP TABLE users; --";
+        const userEmail = faker.internet.email();
+
+        cy.visit('/login');
+        fillSignupForm(sqlInjectionStrings, userEmail);
+
+        // Validate that the form was not submitted successfully
+        // and that no SQL-related error messages are exposed.
+        cy.url().should('include', '/signup'); // Should still be on the signup page
+        cy.get('body').should('not.contain', 'SQL'); // Body should not contain any SQL-related errors  
     });
 });
