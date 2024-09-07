@@ -4,7 +4,7 @@ class SignUp{
        cy.url().should('include', text);
     };
 
-    fillandClickSignupForm = (userName, userEmail) => {
+    fillandSubmitSignupForm = (userName, userEmail) => {
         cy.get('[data-qa="signup-name"]').type(userName);
         cy.get('[data-qa="signup-email"]').type(userEmail);
         cy.get('[data-qa="signup-button"]').click();

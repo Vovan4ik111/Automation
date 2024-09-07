@@ -14,7 +14,7 @@ describe('SignUp', () => {
         signUp.verifyURLContains('/login');
         signUp.verifyElementTextAndVisibility('.signup-form h2', 'New User Signup!');
         
-        signUp.fillandClickSignupForm(userName, userEmail);
+        signUp.fillandSubmitSignupForm(userName, userEmail);
         signUp.verifyURLContains('/signup');
         // Confirm that the name matches the one used on the sign-up page.
         cy.get('[data-qa="name"]').should('attr', 'value', userName);
@@ -44,7 +44,7 @@ describe('SignUp', () => {
         const userMobileNumber = faker.phone.number();
 
         cy.visit('/login');
-        signUp.fillandClickSignupForm(userName, userEmail);
+        signUp.fillandSubmitSignupForm(userName, userEmail);
         cy.get('[data-qa="password"]').type(userPassword);
         cy.get('[data-qa="first_name"]').type(userFirstName);
         cy.get('[data-qa="last_name"]').type(userLastName);
@@ -79,7 +79,7 @@ describe('SignUp', () => {
         const userMobileNumber = faker.phone.number();
 
         cy.visit('/login');
-        signUp.fillandClickSignupForm(userName, userEmail);
+        signUp.fillandSubmitSignupForm(userName, userEmail);
         
         // Select and check if the "Mr." radio button is selected.
         cy.get('label[for="id_gender1"]').should('contain.text', 'Mr.').click();
@@ -133,7 +133,7 @@ describe('SignUp', () => {
         const userName = faker.internet.userName();
         const userExistEmail = 'elizabethresiga@gmail.com';
         cy.visit('/login');
-        signUp.fillandClickSignupForm(userName, userExistEmail);
+        signUp.fillandSubmitSignupForm(userName, userExistEmail);
 
         // Verify the error message
         cy.get('p').contains('Email Address already exist!').should('be.visible');        
@@ -145,7 +145,7 @@ describe('SignUp', () => {
         const userEmail = faker.internet.email();
 
         cy.visit('/login');
-        signUp.fillandClickSignupForm(sqlInjectionStrings, userEmail);
+        signUp.fillandSubmitSignupForm(sqlInjectionStrings, userEmail);
 
         //The website doesn't process SQL scripts
         // Validate that the form was not submitted successfully
